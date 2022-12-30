@@ -5,7 +5,7 @@ const express = require("express")
 const app = express()
 const session = require("express-session")
 const cors = require('cors')
-const verify = require('./auth/googleauth')
+const verify = require('./googleauth')
 
 const USERS = new Map()
 
