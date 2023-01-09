@@ -24,7 +24,7 @@ function isAuthenticated (req, res, next) {
 
 async function userExists (req, res, next) {
   const user = await verify(req.body.googleUser.credential)
-  if(USERS.get(user.email)) next()
+  if(USERS.get(user.sub)) next()
   else res.json({signup: true})
 }
 
@@ -36,11 +36,11 @@ app.post('/login', userExists, async (req, res) => {
   const user = await verify(req.body.googleUser.credential)
   req.session.regenerate((err) => {
     if(err) next(err)
-    req.session.user = USERS.get(user.email)
+    req.session.user = USERS.get(user.sub)
     req.session.authenticated = true
     req.session.save((err) => {
       if(err) return next(err)
-      res.json({authenticated: true, user: req.session.user})
+      res.json({authenticated: req.session.authenticated, user: req.session.user})
     })
   })
 })  
@@ -49,19 +49,20 @@ app.post('/signup', async (req, res) => {
   const user = await verify(req.body.googleUser.credential)
   req.session.regenerate((err) => {
     if(err) next(err)
+    //make solution for duplicate usernames
     USERS.set(
-      user.email, 
+      user.sub, 
       {
         id: user.sub,
         username: req.body.username,
         role: "user"
       }
     )
-    req.session.user = USERS.get(user.email)
+    req.session.user = USERS.get(user.sub)
     req.session.authenticated = true
     req.session.save((err) => {
       if(err) return next(err)
-      res.json({authenticated: true, user: req.session.user})
+      res.json({authenticated: req.session.authenticated, user: req.session.user})
     })
   })
 })
@@ -73,15 +74,15 @@ app.get('/logout', function (req, res, next) {
   // this will ensure that re-using the old session id
   // does not have a logged in user
   req.session.user = null
-  req.session.authenticated = null
-  req.session.save(function (err) {
+  req.session.authenticated = false
+  req.session.save((err) => {
     if (err) next(err)
 
     // regenerate the session, which is good practice to help
     // guard against forms of session fixation
     req.session.regenerate(function (err) {
       if (err) next(err)
-      res.json({authenticated: false})
+      res.json({authenticated: req.session.authenticated})
     })
   })
 })
