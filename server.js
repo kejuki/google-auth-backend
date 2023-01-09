@@ -40,6 +40,7 @@ app.post('/login', userExists, async (req, res) => {
     req.session.authenticated = true
     req.session.save((err) => {
       if(err) return next(err)
+      console.log(`Session created for user ${req.session.user.username}`)
       res.json({authenticated: req.session.authenticated, user: req.session.user})
     })
   })
@@ -55,13 +56,16 @@ app.post('/signup', async (req, res) => {
       {
         id: user.sub,
         username: req.body.username,
-        role: "user"
+        avatar: user.picture,
+        role: "user",
+        dateCreated: Date.now(),
       }
     )
     req.session.user = USERS.get(user.sub)
     req.session.authenticated = true
     req.session.save((err) => {
       if(err) return next(err)
+      console.log(`Account and session created for user ${req.session.user.username}`)
       res.json({authenticated: req.session.authenticated, user: req.session.user})
     })
   })
